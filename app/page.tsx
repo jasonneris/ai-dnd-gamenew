@@ -3,13 +3,21 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
+type Message = {
+  id?: number
+  user_name: string
+  message: string
+  is_dm: boolean
+  created_at?: string
+}
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
 export default function Home() {
-  const [messages, setMessages] = useState<any[]>([])
+  const [messages, setMessages] = useState<Message[]>([])
   const [text, setText] = useState('')
 
   useEffect(() => {
@@ -21,7 +29,7 @@ export default function Home() {
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'messages' },
         payload => {
-          setMessages(prev => [...prev, payload.new])
+          setMessages(prev => [...prev, payload.new as Message])
         }
       )
       .subscribe()
@@ -33,7 +41,7 @@ export default function Home() {
 
   async function loadMessages() {
     const { data } = await supabase.from('messages').select('*')
-    setMessages(data || [])
+    setMessages((data as Message[]) || [])
   }
 
   async function sendMessage() {
@@ -53,7 +61,7 @@ export default function Home() {
       <h1>AI DND Chat</h1>
 
       <div>
-        {messages.map((m:any, i) => (
+        {messages.map((m, i) => (
           <p key={i}>
             <strong>{m.is_dm ? 'DM' : m.user_name}:</strong> {m.message}
           </p>
